@@ -12,5 +12,37 @@
         ]
       }
     ]
+  },
+  {
+    "name": "/start initializes a new user with 100 points",
+    "steps": [
+      {
+        "send": { "text": "/start", "chatId": 100, "userId": 100 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": { "text": "👋 Welcome! Tap a button below to get started." }
+          }
+        ]
+      },
+      {
+        "send": { "text": "/game", "chatId": 100, "userId": 100 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 100, "userId": 100, "messageId": 1002 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      }
+    ]
   }
 ]

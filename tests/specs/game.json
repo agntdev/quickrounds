@@ -63,6 +63,12 @@
         "send": { "callback": "game:start", "chatId": 30, "userId": 30, "messageId": 1001 },
         "expect": [
           {
+            "method": "sendMessage",
+            "payload": {
+              "text": "The game round was cancelled and your 10 points have been refunded."
+            }
+          },
+          {
             "method": "editMessageText",
             "payload": {
               "text": "Game cancelled — need at least 2 players to start. All join fees have been refunded."
@@ -137,6 +143,39 @@
             "payload": {
               "text": "Only the game owner can start the round.",
               "show_alert": true
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "New game cancels previous open game in the same chat",
+    "steps": [
+      {
+        "send": { "text": "/game", "chatId": 90, "userId": 90 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "text": "/game", "chatId": 90, "userId": 90 },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Game cancelled — a new round was started."
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
             }
           }
         ]

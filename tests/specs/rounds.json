@@ -1,0 +1,56 @@
+[
+  {
+    "name": "Rounds list shows empty state when no games exist",
+    "steps": [
+      {
+        "send": { "callback": "rounds:list", "chatId": 60, "userId": 60 },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "No game rounds yet — start one with 🎮 New Game."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Rounds list shows games after a round is created",
+    "steps": [
+      {
+        "send": { "text": "/game", "chatId": 70, "userId": 70 },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "rounds:list", "chatId": 70, "userId": 70, "messageId": 1002 },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Transaction log shows empty state when no transactions exist",
+    "steps": [
+      {
+        "send": { "callback": "txn:list", "chatId": 80, "userId": 80 },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "No transactions yet."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
