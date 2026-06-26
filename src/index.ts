@@ -4,6 +4,14 @@ import { listOpenGames, saveGameRound, getUser, saveUser, addTransaction } from 
 
 const JOIN_COST = 10;
 
+function startedRecoveryText(game: { players: number[] }, loserId: number): string {
+  const players = game.players.map((pid, i) => {
+    const marker = pid === loserId ? " 💀" : " ✅";
+    return `${i + 1}. Player ${pid}${marker}`;
+  }).join("\n");
+  return `🎮 Game started!\n\nPlayers:\n${players}\n\n💀 Player ${loserId} lost! 10 points split among winners.`;
+}
+
 async function recoverStaleGames(token: string) {
   const openGames = await listOpenGames();
   if (openGames.length === 0) return;
@@ -19,11 +27,41 @@ async function recoverStaleGames(token: string) {
     if (game.players.length >= 2) {
       game.status = "started";
       await saveGameRound(game);
+
+      const loserIndex = Math.floor(Math.random() * game.players.length);
+      const loserId = game.players[loserIndex];
+      const winners = game.players.filter((_, i) => i !== loserIndex);
+      const sharePerWinner = Math.floor(JOIN_COST / winners.length);
+      const remainder = JOIN_COST - sharePerWinner * winners.length;
+
+      for (let i = 0; i < winners.length; i++) {
+        const pid = winners[i];
+        const extra = i === 0 ? remainder : 0;
+        const user = await getUser(pid);
+        if (user) {
+          user.point_balance += JOIN_COST + sharePerWinner + extra;
+          user.join_history.push(`win:${game.id}`);
+          await saveUser(user);
+          await addTransaction({
+            user_id: pid,
+            amount: JOIN_COST + sharePerWinner + extra,
+            reason: `win:${game.id}`,
+            timestamp: Date.now(),
+          });
+        }
+      }
+
+      const loser = await getUser(loserId);
+      if (loser) {
+        loser.join_history.push(`lose:${game.id}`);
+        await saveUser(loser);
+      }
+
       try {
         await api.editMessageText(
           game.group_chat_id,
           game.message_id,
-          `🎮 Game started!\n\nPlayers:\n${game.players.map((pid, i) => `${i + 1}. Player ${pid}`).join("\n")}\n\nGood luck!`,
+          startedRecoveryText(game, loserId),
         );
       } catch {
         // Message may no longer exist

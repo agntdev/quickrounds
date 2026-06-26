@@ -1,6 +1,6 @@
 [
   {
-    "name": "/game starts a new game round with join and start buttons",
+    "name": "/game starts a new game round with join button",
     "steps": [
       {
         "send": { "text": "/game", "chatId": 10, "userId": 10 },
@@ -8,7 +8,7 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+              "text": "🎮 Game round!\n\nPlayers (0/6):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
             }
           }
         ]
@@ -24,7 +24,7 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+              "text": "🎮 Game round!\n\nPlayers (0/6):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
             }
           }
         ]
@@ -32,7 +32,12 @@
       {
         "send": { "callback": "game:join", "chatId": 20, "userId": 21, "messageId": 1001 },
         "expect": [
-          { "method": "editMessageText" },
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "🎮 Game round!\n\nPlayers (1/6):\n1. Player 21\n\n⏳ Registration closes in 30s"
+            }
+          },
           { "method": "answerCallbackQuery" }
         ]
       }
@@ -47,7 +52,7 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+              "text": "🎮 Game round!\n\nPlayers (0/6):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
             }
           }
         ]
@@ -55,7 +60,12 @@
       {
         "send": { "callback": "game:join", "chatId": 30, "userId": 31, "messageId": 1001 },
         "expect": [
-          { "method": "editMessageText" },
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "🎮 Game round!\n\nPlayers (1/6):\n1. Player 31\n\n⏳ Registration closes in 30s"
+            }
+          },
           { "method": "answerCallbackQuery" }
         ]
       },
@@ -80,7 +90,7 @@
     ]
   },
   {
-    "name": "Start now starts game round with enough players",
+    "name": "Start now starts game round with enough players (revolver)",
     "steps": [
       {
         "send": { "text": "/game", "chatId": 40, "userId": 40 },
@@ -88,7 +98,7 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+              "text": "🎮 Game round!\n\nPlayers (0/6):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
             }
           }
         ]
@@ -96,26 +106,31 @@
       {
         "send": { "callback": "game:join", "chatId": 40, "userId": 41, "messageId": 1001 },
         "expect": [
-          { "method": "editMessageText" },
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "🎮 Game round!\n\nPlayers (1/6):\n1. Player 41\n\n⏳ Registration closes in 30s"
+            }
+          },
           { "method": "answerCallbackQuery" }
         ]
       },
       {
         "send": { "callback": "game:join", "chatId": 40, "userId": 42, "messageId": 1001 },
         "expect": [
-          { "method": "editMessageText" },
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "🎮 Game round!\n\nPlayers (2/6):\n1. Player 41\n2. Player 42\n\n⏳ Registration closes in 30s"
+            }
+          },
           { "method": "answerCallbackQuery" }
         ]
       },
       {
         "send": { "callback": "game:start", "chatId": 40, "userId": 40, "messageId": 1001 },
         "expect": [
-          {
-            "method": "editMessageText",
-            "payload": {
-              "text": "🎮 Game started!\n\nPlayers:\n1. Player 41\n2. Player 42\n\nGood luck!"
-            }
-          },
+          { "method": "editMessageText" },
           { "method": "answerCallbackQuery" }
         ]
       }
@@ -130,7 +145,7 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+              "text": "🎮 Game round!\n\nPlayers (0/6):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
             }
           }
         ]
@@ -158,7 +173,7 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+              "text": "🎮 Game round!\n\nPlayers (0/6):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
             }
           }
         ]
@@ -175,7 +190,135 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+              "text": "🎮 Game round!\n\nPlayers (0/6):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Game is full at 6 players and auto-resolves",
+    "steps": [
+      {
+        "send": { "text": "/game", "chatId": 60, "userId": 60 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "🎮 Game round!\n\nPlayers (0/6):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 60, "userId": 61, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 60, "userId": 62, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 60, "userId": 63, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 60, "userId": 64, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 60, "userId": 65, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 60, "userId": 66, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Attempting to join a started game shows an alert",
+    "steps": [
+      {
+        "send": { "text": "/game", "chatId": 70, "userId": 70 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "🎮 Game round!\n\nPlayers (0/6):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 70, "userId": 71, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 70, "userId": 72, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 70, "userId": 73, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 70, "userId": 74, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 70, "userId": 75, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 70, "userId": 76, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 70, "userId": 77, "messageId": 1001 },
+        "expect": [
+          {
+            "method": "answerCallbackQuery",
+            "payload": {
+              "text": "This game round has ended. Start a new one with /game.",
+              "show_alert": true
             }
           }
         ]

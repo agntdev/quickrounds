@@ -23,16 +23,12 @@ registerMainMenuItem({ label: "🎮 New Game", data: "game:new", order: 10 });
 
 const JOIN_COST = 10;
 const REGISTRATION_SECONDS = 30;
+const MAX_PLAYERS = 6;
 
 const activeTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-function registrationKeyboard(ownerId: number, viewerId: number): InlineKeyboardMarkup {
-  const joinBtn = inlineButton("✋ Join", "game:join");
-  const row = [joinBtn];
-  if (viewerId === ownerId) {
-    row.push(inlineButton("▶️ Start now", "game:start"));
-  }
-  return inlineKeyboard([row]);
+function registrationKeyboard(): InlineKeyboardMarkup {
+  return inlineKeyboard([[inlineButton("✋ Join", "game:join")]]);
 }
 
 function gameStatusText(game: GameRound): string {
@@ -42,12 +38,15 @@ function gameStatusText(game: GameRound): string {
     game.players.length > 0
       ? game.players.map((pid, i) => `${i + 1}. Player ${pid}`).join("\n")
       : "No players yet — tap ✋ Join to enter.";
-  return `🎮 Game round!\n\nPlayers (${game.players.length}):\n${playersText}\n\n⏳ Registration closes in ${seconds}s`;
+  return `🎮 Game round!\n\nPlayers (${game.players.length}/${MAX_PLAYERS}):\n${playersText}\n\n⏳ Registration closes in ${seconds}s`;
 }
 
-function startedText(game: GameRound): string {
-  const playersText = game.players.map((pid, i) => `${i + 1}. Player ${pid}`).join("\n");
-  return `🎮 Game started!\n\nPlayers:\n${playersText}\n\nGood luck!`;
+function startedText(game: GameRound, loserId: number): string {
+  const players = game.players.map((pid, i) => {
+    const marker = pid === loserId ? " 💀" : " ✅";
+    return `${i + 1}. Player ${pid}${marker}`;
+  }).join("\n");
+  return `🎮 Game started!\n\nPlayers:\n${players}\n\n💀 Player ${loserId} lost! 10 points split among winners.`;
 }
 
 function cancelledText(): string {
@@ -95,7 +94,37 @@ async function resolveGame(
   if (game.players.length >= 2) {
     game.status = "started";
     await saveGameRound(game);
-    await api.editMessageText(game.group_chat_id, game.message_id, startedText(game));
+
+    const loserIndex = Math.floor(Math.random() * game.players.length);
+    const loserId = game.players[loserIndex];
+    const winners = game.players.filter((_, i) => i !== loserIndex);
+    const sharePerWinner = Math.floor(JOIN_COST / winners.length);
+    const remainder = JOIN_COST - sharePerWinner * winners.length;
+
+    for (let i = 0; i < winners.length; i++) {
+      const pid = winners[i];
+      const extra = i === 0 ? remainder : 0;
+      const user = await getUser(pid);
+      if (user) {
+        user.point_balance += JOIN_COST + sharePerWinner + extra;
+        user.join_history.push(`win:${game.id}`);
+        await saveUser(user);
+        await addTransaction({
+          user_id: pid,
+          amount: JOIN_COST + sharePerWinner + extra,
+          reason: `win:${game.id}`,
+          timestamp: Date.now(),
+        });
+      }
+    }
+
+    const loser = await getUser(loserId);
+    if (loser) {
+      loser.join_history.push(`lose:${game.id}`);
+      await saveUser(loser);
+    }
+
+    await api.editMessageText(game.group_chat_id, game.message_id, startedText(game, loserId));
   } else {
     game.status = "cancelled";
     await saveGameRound(game);
@@ -165,7 +194,7 @@ async function doCreateGame(
 
   await saveGameRound(game);
 
-  const msg = await send(gameStatusText(game), registrationKeyboard(userId, userId));
+  const msg = await send(gameStatusText(game), registrationKeyboard());
   const sentMsg = msg as { message_id: number };
   game.message_id = sentMsg.message_id;
   await saveGameRound(game);
@@ -253,6 +282,14 @@ composer.callbackQuery("game:join", async (ctx) => {
     return;
   }
 
+  if (game.players.length >= MAX_PLAYERS) {
+    await ctx.answerCallbackQuery({
+      text: "This game is full (6 players max).",
+      show_alert: true,
+    });
+    return;
+  }
+
   const user = await ensureUser(userId, ctx.from!.first_name ?? "Player");
 
   if (user.point_balance < JOIN_COST) {
@@ -285,13 +322,24 @@ composer.callbackQuery("game:join", async (ctx) => {
   game.players.push(userId);
   await saveGameRound(game);
 
+  if (game.players.length >= MAX_PLAYERS) {
+    const timer = activeTimers.get(gameId);
+    if (timer) {
+      clearTimeout(timer);
+      activeTimers.delete(gameId);
+    }
+    await resolveGame(game, ctx.api);
+    await ctx.answerCallbackQuery();
+    return;
+  }
+
   await ctx.editMessageText(gameStatusText(game), {
-    reply_markup: registrationKeyboard(game.owner_id, userId),
+    reply_markup: registrationKeyboard(),
   });
   await ctx.answerCallbackQuery();
 });
 
-// Start now (owner only)
+// Start now (owner only) — button removed from UI, kept for backward compat
 composer.callbackQuery("game:start", async (ctx) => {
   const userId = ctx.from!.id;
   const gameId = ctx.session.activeGameId;
