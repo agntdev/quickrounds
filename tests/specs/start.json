@@ -31,7 +31,7 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+              "text": "🎮 Game round!\n\nPlayers (0/6):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
             }
           }
         ]
