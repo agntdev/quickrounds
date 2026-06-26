@@ -8,6 +8,7 @@ import {
   saveGameRound,
   getGameRound,
   addTransaction,
+  listGameRounds,
   type GameRound,
 } from "../store.js";
 
@@ -53,6 +54,40 @@ function cancelledText(): string {
   return "Game cancelled — need at least 2 players to start. All join fees have been refunded.";
 }
 
+async function cancelPreviousGame(chatId: number, excludeGameId: string, api: Ctx["api"]): Promise<void> {
+  const rounds = await listGameRounds(chatId, 5);
+  for (const r of rounds) {
+    if (r.id === excludeGameId) continue;
+    if (r.status !== "open") continue;
+    r.status = "cancelled";
+    await saveGameRound(r);
+    for (const pid of r.players) {
+      const user = await getUser(pid);
+      if (user) {
+        user.point_balance += JOIN_COST;
+        user.join_history.push(`refund:${r.id}`);
+        await saveUser(user);
+        await addTransaction({
+          user_id: pid,
+          amount: JOIN_COST,
+          reason: `refund:${r.id}`,
+          timestamp: Date.now(),
+        });
+        try {
+          await api.sendMessage(pid, "A previous game round was cancelled and your 10 points have been refunded.");
+        } catch {
+          // DM delivery is best-effort
+        }
+      }
+    }
+    try {
+      await api.editMessageText(chatId, r.message_id, "Game cancelled — a new round was started.");
+    } catch {
+      // Message may no longer exist
+    }
+  }
+}
+
 async function resolveGame(
   game: GameRound,
   api: Ctx["api"],
@@ -76,6 +111,11 @@ async function resolveGame(
           reason: `refund:${game.id}`,
           timestamp: Date.now(),
         });
+        try {
+          await api.sendMessage(pid, "The game round was cancelled and your 10 points have been refunded.");
+        } catch {
+          // DM delivery is best-effort
+        }
       }
     }
     await api.editMessageText(game.group_chat_id, game.message_id, cancelledText());
@@ -97,7 +137,6 @@ async function doCreateGame(
   const chatId = ctx.chat!.id;
   const userName = ctx.from!.first_name ?? "Player";
 
-  // Clear any previous active game's timer
   const prevId = ctx.session.activeGameId;
   if (prevId) {
     const existingTimer = activeTimers.get(prevId);
@@ -121,6 +160,8 @@ async function doCreateGame(
     players: [],
     message_id: 0,
   };
+
+  await cancelPreviousGame(chatId, gameId, ctx.api);
 
   await saveGameRound(game);
 
@@ -189,6 +230,21 @@ composer.callbackQuery("game:join", async (ctx) => {
     return;
   }
 
+  if (Date.now() > game.registration_deadline) {
+    await ctx.answerCallbackQuery({
+      text: "Registration time has expired. Start a new game with /game.",
+      show_alert: true,
+    });
+    const timer = activeTimers.get(gameId);
+    if (timer) {
+      clearTimeout(timer);
+      activeTimers.delete(gameId);
+    }
+    clearGameSession(ctx);
+    await resolveGame(game, ctx.api);
+    return;
+  }
+
   if (game.players.includes(userId)) {
     await ctx.answerCallbackQuery({
       text: "You're already in this game!",
@@ -200,6 +256,14 @@ composer.callbackQuery("game:join", async (ctx) => {
   const user = await ensureUser(userId, ctx.from!.first_name ?? "Player");
 
   if (user.point_balance < JOIN_COST) {
+    try {
+      await ctx.api.sendMessage(
+        userId,
+        `You need 10 points to join the game. Your balance: ${user.point_balance}. Start a new game with /game to earn more.`,
+      );
+    } catch {
+      // DM delivery is best-effort
+    }
     await ctx.answerCallbackQuery({
       text: `You need 10 points to join. Your balance: ${user.point_balance}.`,
       show_alert: true,
