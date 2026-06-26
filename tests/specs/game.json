@@ -1,0 +1,146 @@
+[
+  {
+    "name": "/game starts a new game round with join and start buttons",
+    "steps": [
+      {
+        "send": { "text": "/game", "chatId": 10, "userId": 10 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Join game deducts points and adds user to player list",
+    "steps": [
+      {
+        "send": { "text": "/game", "chatId": 20, "userId": 20 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 20, "userId": 21, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Start now cancels game with fewer than two players and refunds",
+    "steps": [
+      {
+        "send": { "text": "/game", "chatId": 30, "userId": 30 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 30, "userId": 31, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      },
+      {
+        "send": { "callback": "game:start", "chatId": 30, "userId": 30, "messageId": 1001 },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Game cancelled — need at least 2 players to start. All join fees have been refunded."
+            }
+          },
+          { "method": "answerCallbackQuery" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Start now starts game round with enough players",
+    "steps": [
+      {
+        "send": { "text": "/game", "chatId": 40, "userId": 40 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 40, "userId": 41, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      },
+      {
+        "send": { "callback": "game:join", "chatId": 40, "userId": 42, "messageId": 1001 },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "answerCallbackQuery" }
+        ]
+      },
+      {
+        "send": { "callback": "game:start", "chatId": 40, "userId": 40, "messageId": 1001 },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "🎮 Game started!\n\nPlayers:\n1. Player 41\n2. Player 42\n\nGood luck!"
+            }
+          },
+          { "method": "answerCallbackQuery" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Only the game owner can start the round",
+    "steps": [
+      {
+        "send": { "text": "/game", "chatId": 50, "userId": 50 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "🎮 Game round!\n\nPlayers (0):\nNo players yet — tap ✋ Join to enter.\n\n⏳ Registration closes in 30s"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "game:start", "chatId": 50, "userId": 51, "messageId": 1001 },
+        "expect": [
+          {
+            "method": "answerCallbackQuery",
+            "payload": {
+              "text": "Only the game owner can start the round.",
+              "show_alert": true
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
